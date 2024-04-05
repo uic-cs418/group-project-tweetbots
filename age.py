@@ -1,3 +1,42 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pyreadstat
+
+NPORS_2020 = 'TwitterBots_Data/NPORS_Data/2020/NPORS 2020.sav'  
+NPORS_2021 = 'TwitterBots_Data/NPORS_Data/2021/NPORS_2021_for_public_release.sav'
+NPORS_2022 = 'TwitterBots_Data/NPORS_Data/2022/NPORS_2022_for_public_release.sav'
+NPORS_2023 = 'TwitterBots_Data/NPORS_Data/2023/NPORS_2023_for_public_release.sav'
+
+df_2020 , meta_2020 = pyreadstat.read_sav(NPORS_2020)
+df_2021 , meta_2021 = pyreadstat.read_sav(NPORS_2021)
+df_2022 , meta_2022 = pyreadstat.read_sav(NPORS_2022)
+df_2023 , meta_2022 = pyreadstat.read_sav(NPORS_2023)
+NPORS_df = [df_2020, df_2021, df_2022, df_2023]
+
+for index in NPORS_df:
+    print(f'Information. \n')
+    print(index.info())
+    print(f' Number of unique values in each column:\n{index.nunique()}')
+
+
+combined_df = pd.DataFrame()
+names = ["2020_df", "2021_df", "2023_df", "2024_df"] 
+for idx, df in enumerate(NPORS_df):
+    df.name = names[idx]
+
+mapping_socialmedia = {
+    'SMUSE_a': 'Facebook',
+    'SMUSE_b': 'YouTube',
+    'SMUSE_c': 'Twitter',
+    'SMUSE_d': 'Instagram',
+    'SMUSE_e': 'Snapchat',
+    'SMUSE_f': 'WhatsApp',
+    'SMUSE_g': 'LinkedIn',
+    'SMUSE_h': 'Pinterest',
+    'SMUSE_i': 'TikTok'
+}
+
 age_bins = [0, 18, 25, 35, 45, 55, 65, 100]
 age_labels = ['0-18', '19-25', '26-35', '36-45', '46-55', '56-65', '66+']
 

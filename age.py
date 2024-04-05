@@ -8,7 +8,7 @@ for idx, df in enumerate(NPORS_df):
     if 'AGE' in df:
         df['AGE_GROUP'] = pd.cut(df['AGE'], bins=age_bins, labels=age_labels, right=False)
     else:
-        continue  # If none of the specified age columns are found, skip to the next dataframe
+        continue
 
     groups = df.groupby(['AGE_GROUP'])
 

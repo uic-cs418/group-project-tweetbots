@@ -1,73 +1,53 @@
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
-import pyreadstat
 
-NPORS_2020 = 'TwitterBots_Data/NPORS_Data/2020/NPORS 2020.sav'  
-NPORS_2021 = 'TwitterBots_Data/NPORS_Data/2021/NPORS_2021_for_public_release.sav'
-NPORS_2022 = 'TwitterBots_Data/NPORS_Data/2022/NPORS_2022_for_public_release.sav'
-NPORS_2023 = 'TwitterBots_Data/NPORS_Data/2023/NPORS_2023_for_public_release.sav'
+# Read the CSV file
+dff = pd.read_csv("Data/NPORS_Data/combined_data.csv")
 
-df_2020 , meta_2020 = pyreadstat.read_sav(NPORS_2020)
-df_2021 , meta_2021 = pyreadstat.read_sav(NPORS_2021)
-df_2022 , meta_2022 = pyreadstat.read_sav(NPORS_2022)
-df_2023 , meta_2022 = pyreadstat.read_sav(NPORS_2023)
-NPORS_df = [df_2020, df_2021, df_2022, df_2023]
+# Define the list of column names related to social media usage
+social_media_columns = ['SMUSE_a', 'SMUSE_c', 'SMUSE_d', 'SMUSE_e', 'SMUSE_i']
 
-for index in NPORS_df:
-    print(f'Information. \n')
-    print(index.info())
-    print(f' Number of unique values in each column:\n{index.nunique()}')
+# Filter the DataFrame to include only the social media columns and 'AGE'
+dff_social_media = dff[social_media_columns + ['AGE']].copy()  # Make a copy of the DataFrame
 
-
-combined_df = pd.DataFrame()
-names = ["2020_df", "2021_df", "2023_df", "2024_df"] 
-for idx, df in enumerate(NPORS_df):
-    df.name = names[idx]
-
-mapping_socialmedia = {
+# Define a dictionary to map column names to corresponding social media platforms
+smuse_mapping = {
     'SMUSE_a': 'Facebook',
-    'SMUSE_b': 'YouTube',
     'SMUSE_c': 'Twitter',
     'SMUSE_d': 'Instagram',
     'SMUSE_e': 'Snapchat',
-    'SMUSE_f': 'WhatsApp',
-    'SMUSE_g': 'LinkedIn',
-    'SMUSE_h': 'Pinterest',
     'SMUSE_i': 'TikTok'
 }
 
-age_bins = [0, 18, 25, 35, 45, 55, 65, 100]
-age_labels = ['0-18', '19-25', '26-35', '36-45', '46-55', '56-65', '66+']
+# Rename the columns according to the mapping
+dff_social_media.rename(columns=smuse_mapping, inplace=True)
 
-for idx, df in enumerate(NPORS_df):
-    print(f"Dataframe {idx + 1} Title: {df.name if hasattr(df, 'name') else 'Unnamed'}")
-    
-    # Check and categorize AGE into bins
-    if 'AGE' in df:
-        df['AGE_GROUP'] = pd.cut(df['AGE'], bins=age_bins, labels=age_labels, right=False)
-    else:
-        continue
+# Group ages in slices of 5 years and calculate the sum for each group
+dff_social_media['AGE_GROUP'] = pd.cut(dff_social_media['AGE'], bins=range(10, 116, 5), right=False)
+grouped_dff = dff_social_media.groupby('AGE_GROUP').agg(lambda x: (x == 1).sum())
 
-    groups = df.groupby(['AGE_GROUP'])
+# Reset index to make 'AGE_GROUP' a column instead of an index
+grouped_dff.reset_index(inplace=True)
 
-    social_media_data = {social_media: [] for social_media in mapping_socialmedia.values()}
-    
-    for group_name, group_df in groups:
-        selected_data = group_df[list(mapping_socialmedia.keys())]
-        selected_data = selected_data.rename(columns=mapping_socialmedia) 
-        social_media_percentages = selected_data.div(selected_data.sum(axis=1), axis=0) * 100
-        for social_media in social_media_percentages.columns:
-            social_media_data[social_media].append(social_media_percentages[social_media].mean())
+# Plot the bar plot
+plt.figure(figsize=(12, 6))
 
-    social_media_df = pd.DataFrame(social_media_data, index=age_labels)
-    
-    # Plotting
-    social_media_df.plot(kind='bar', figsize=(12, 6))
-    plt.legend(title='Social Media Platform')
-    plt.title(f'Social Media Usage by Age Group - {df.name if hasattr(df, "name") else "Unnamed"}')
-    plt.xlabel('Age Group')
-    plt.ylabel('Percentage')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
+# Define colors for each platform
+colors = ['blue', 'green', 'red', 'purple', 'orange']
+
+# Define the social media platforms
+social_media_platforms = ['Facebook', 'Twitter', 'Instagram', 'Snapchat', 'TikTok']
+
+# Plot bars for each platform
+for i, platform in enumerate(social_media_platforms):
+    plt.bar(grouped_dff['AGE_GROUP'].astype(str), grouped_dff[platform], color=colors[i], label=platform)
+
+plt.xlabel('Age Group')
+plt.ylabel('Number of Users')
+plt.title('Social Media Usage by Age Group')
+plt.xticks(rotation=45, ha='right')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+
